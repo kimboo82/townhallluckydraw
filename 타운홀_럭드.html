@@ -1,0 +1,310 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>FY26 Lucky Draw Event Final</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@100;300;400;700;900&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --brand-yellow: #e6ff00;
+        }
+        body {
+            font-family: 'Noto+Sans+KR', sans-serif;
+            background-color: #000;
+            color: #fff;
+            margin: 0;
+            overflow: hidden;
+        }
+        
+        /* Full Screen Scroll Snap */
+        .slide-container {
+            height: 100vh;
+            overflow-y: auto;
+            scroll-snap-type: y mandatory;
+            scrollbar-width: none;
+            -ms-overflow-style: none;
+        }
+        .slide-container::-webkit-scrollbar { display: none; }
+        
+        .slide {
+            height: 100vh;
+            width: 100vw;
+            scroll-snap-align: start;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+            overflow: hidden;
+        }
+
+        /* 럭키드로우 기본 레이아웃 - 이미지 크기 확대를 위해 max-width 및 비율 조정 */
+        .content-wrapper {
+            display: grid;
+            grid-template-columns: 1.3fr 1fr; /* 이미지 쪽 비중 확대 */
+            gap: 5rem;
+            align-items: center;
+            width: 100%;
+            max-width: 1400px; /* 기존 1200px에서 1.3배 수준으로 확장 */
+            z-index: 10;
+            padding: 0 5%;
+        }
+
+        @media (max-width: 1024px) {
+            .content-wrapper { grid-template-columns: 1fr; text-align: center; gap: 2rem; }
+        }
+
+        /* 상품 카드 - 1.3배 커진 컨테이너에 맞춰 스케일링 */
+        .image-card {
+            position: relative;
+            aspect-ratio: 1 / 1;
+            background: #111;
+            border-radius: 24px;
+            overflow: hidden;
+            box-shadow: 0 0 50px rgba(230, 255, 0, 0.1);
+            transition: all 0.6s cubic-bezier(0.16, 1, 0.3, 1);
+            width: 100%; /* 컨테이너 너비에 맞춤 */
+        }
+        .image-card:hover { transform: scale(1.03); box-shadow: 0 0 70px rgba(230, 255, 0, 0.3); }
+        .image-card img { width: 100%; height: 100%; object-fit: cover; }
+
+        .shop-btn {
+            position: absolute;
+            bottom: 24px;
+            right: 24px;
+            background: #fff;
+            color: #000;
+            padding: 10px 20px;
+            border-radius: 50px;
+            font-size: 0.8rem;
+            font-weight: 900;
+            z-index: 20;
+            box-shadow: 0 10px 20px rgba(0,0,0,0.5);
+        }
+
+        .lucky-tag {
+            background-color: var(--brand-yellow);
+            color: #000;
+            padding: 6px 14px;
+            font-weight: 900;
+            font-size: 0.85rem;
+            display: inline-block;
+            margin-bottom: 2rem;
+        }
+        /* 제품명 폰트 20% 축소: 기존 4rem -> 3.2rem */
+        .title-main { font-size: 3.2rem; line-height: 1.1; font-weight: 900; margin-bottom: 1.5rem; }
+        .title-sub { color: var(--brand-yellow); font-style: italic; display: block; }
+        .description { color: #888; font-size: 1.25rem; line-height: 1.6; font-weight: 300; }
+
+        .animate-reveal { opacity: 0; transform: translateY(40px); transition: all 0.8s ease-out; }
+        .slide.active .animate-reveal { opacity: 1; transform: translateY(0); }
+        .delay-1 { transition-delay: 0.2s; }
+        .delay-2 { transition-delay: 0.4s; }
+
+        .bg-glow {
+            position: absolute;
+            width: 800px;
+            height: 800px;
+            background: radial-gradient(circle, rgba(230, 255, 0, 0.05) 0%, transparent 70%);
+            z-index: 1;
+            pointer-events: none;
+        }
+        
+        @keyframes float {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-20px); }
+        }
+        .floating { animation: float 6s ease-in-out infinite; }
+    </style>
+</head>
+<body>
+
+    <!-- 상품 설정 데이터 (기존 유지) -->
+    <script>
+        const PRODUCT_CONFIG = {
+            draw1: {
+                link: "https://brand.naver.com/linefriends/products/12842901526",
+                image: "https://cdn.shopify.com/s/files/1/0513/1599/8919/files/line-friends-electronics--17-5cm-brown-x-mr-maria-friends-of-light-17-5cm-1217508589.jpg?v=1769102052"
+            },
+            draw2: {
+                link: "https://brand.naver.com/linefriends/products/13074921022",
+                image: "https://cdn.shopify.com/s/files/1/0513/1599/8919/files/ssebongrama-electronics----1221701187.jpg?v=1771543633"
+            },
+            draw3: {
+                link: "https://brand.naver.com/linefriends/products/13074925600",
+                image: "https://cdn.shopify.com/s/files/1/0513/1599/8919/files/ssebongrama-electronics----1221701178.jpg?v=1771543093"
+            },
+            draw4: {
+                link: "https://brand.naver.com/linefriends/products/12842901562",
+                image: "https://cdn.shopify.com/s/files/1/0513/1599/8919/files/line-friends-electronics--50cm-brown-x-mr-maria-star-light-50cm-1212546574.jpg?v=1766444230"
+            },
+            beaverChips: "https://cdn.shopify.com/s/files/1/0513/1599/8919/files/f3847dd535353bbb5447ff6fb5539222.png?v=1776741005"
+        };
+    </script>
+
+    <div class="slide-container" id="main-container">
+        
+        <!-- Intro -->
+        <section class="slide active">
+            <div class="bg-glow"></div>
+            <div class="text-center z-10">
+                <h1 class="text-7xl md:text-[10rem] font-black italic tracking-tighter animate-reveal">LUCKY DRAW</h1>
+                <p class="text-xl md:text-3xl text-gray-500 font-light animate-reveal delay-1 uppercase tracking-widest">FY26 Special Event</p>
+                <div class="mt-20 animate-bounce opacity-30 animate-reveal delay-2">
+                    <svg class="w-10 h-10 mx-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 14l-7 7m0 0l-7-7m7 7V3"></path></svg>
+                </div>
+            </div>
+        </section>
+
+        <!-- Draw #1 -->
+        <section class="slide">
+            <div class="bg-glow" style="left: -10%;"></div>
+            <div class="content-wrapper">
+                <div class="animate-reveal floating">
+                    <a href="javascript:window.open(PRODUCT_CONFIG.draw1.link)" class="image-card block">
+                        <img id="img-1" src="" alt="Draw 1">
+                        <div class="shop-btn">VIEW ITEM ↗</div>
+                    </a>
+                </div>
+                <div class="text-content">
+                    <span class="lucky-tag animate-reveal">LUCKY DRAW #1</span>
+                    <h2 class="title-main animate-reveal delay-1">
+                        BROWN X Mr Maria<br><span class="title-sub">FRIENDS OF LIGHT</span>
+                    </h2>
+                    <p class="description animate-reveal delay-2">
+                        어디든 데려갈 수 있는 17.5cm의 작고 소중한 친구.<br>
+                        침대 옆이나 가방 안에서도 브라운의 따뜻한 빛은 당신을 지켜줍니다.
+                    </p>
+                </div>
+            </div>
+        </section>
+
+        <!-- Draw #2 -->
+        <section class="slide">
+            <div class="bg-glow" style="right: -10%;"></div>
+            <div class="content-wrapper">
+                <div class="animate-reveal floating">
+                    <a href="javascript:window.open(PRODUCT_CONFIG.draw2.link)" class="image-card block">
+                        <img id="img-2" src="" alt="Draw 2">
+                        <div class="shop-btn">VIEW ITEM ↗</div>
+                    </a>
+                </div>
+                <div class="text-content">
+                    <span class="lucky-tag animate-reveal">LUCKY DRAW #2</span>
+                    <h2 class="title-main animate-reveal delay-1">
+                        쎄봉라마 x 비믹스<br><span class="title-sub">부리 퓨어몰드 램프</span>
+                    </h2>
+                    <p class="description animate-reveal delay-2">
+                        본질에 집중한 순수한 디자인.<br>
+                        감각적인 전구와 세라믹 베이스가 만들어내는 아늑한 분위기가 공간에 품격을 더해줍니다.
+                    </p>
+                </div>
+            </div>
+        </section>
+
+        <!-- Draw #3 -->
+        <section class="slide">
+            <div class="bg-glow"></div>
+            <div class="content-wrapper">
+                <div class="animate-reveal floating">
+                    <a href="javascript:window.open(PRODUCT_CONFIG.draw3.link)" class="image-card block">
+                        <img id="img-3" src="" alt="Draw 3">
+                        <div class="shop-btn">VIEW ITEM ↗</div>
+                    </a>
+                </div>
+                <div class="text-content">
+                    <span class="lucky-tag animate-reveal">LUCKY DRAW #3</span>
+                    <h2 class="title-main animate-reveal delay-1">
+                        쎄봉라마 x 비믹스<br><span class="title-sub">부리 세라믹 시계</span>
+                    </h2>
+                    <p class="description animate-reveal delay-2">
+                        미니멀한 소재와 위트 있는 부리 디자인의 결합.<br>
+                        데스크 위에서 조용히 빛나는 당신만의 특별한 시간을 선물합니다.
+                    </p>
+                </div>
+            </div>
+        </section>
+
+        <!-- Draw #4 -->
+        <section class="slide">
+            <div class="bg-glow" style="width: 1000px; height: 1000px; opacity: 0.1;"></div>
+            <div class="content-wrapper">
+                <div class="animate-reveal floating">
+                    <a href="javascript:window.open(PRODUCT_CONFIG.draw4.link)" class="image-card block" style="box-shadow: 0 0 80px rgba(230, 255, 0, 0.3);">
+                        <img id="img-4" src="" alt="Draw 4">
+                        <div class="shop-btn">VIEW ITEM ↗</div>
+                    </a>
+                </div>
+                <div class="text-content">
+                    <span class="lucky-tag animate-reveal">LUCKY DRAW #4</span>
+                    <h2 class="title-main animate-reveal delay-1">
+                        BROWN X Mr Maria<br><span class="title-sub">STAR LIGHT (50cm)</span>
+                    </h2>
+                    <p class="description animate-reveal delay-2">
+                        무려 50cm의 거대한 존재감.<br>
+                        부드럽고 따뜻한 빛으로 공간을 압도하는 브라운 스타 라이트 단순한 조명을 넘어선 최고의 인테리어 오브제의 주인공은?
+                    </p>
+                </div>
+            </div>
+        </section>
+
+        <!-- One More Thing 슬라이드 -->
+        <section class="slide">
+            <div class="bg-glow"></div>
+            <div class="text-center z-10">
+                <h1 class="text-6xl md:text-[8rem] font-black italic tracking-tighter animate-reveal text-white">ONE MORE THING</h1>
+                <p class="text-xl md:text-2xl text-gray-500 font-light animate-reveal delay-1 uppercase tracking-widest">Wait, we have something special</p>
+            </div>
+        </section>
+
+        <!-- Bravo Beaver (이미지가 하얀 상자에 꽉 차도록 수정) -->
+        <section class="slide">
+            <div class="bg-glow" style="right: -5%;"></div>
+            <div class="content-wrapper">
+                <div class="animate-reveal floating">
+                    <div class="image-card block" style="background: #fff; box-shadow: 0 0 40px rgba(255, 255, 255, 0.1);">
+                        <!-- padding을 제거하고 object-fit을 cover로 변경하여 꽉 채움 -->
+                        <img id="beaver-intro-img" src="" alt="Bravo Beaver">
+                    </div>
+                </div>
+                <div class="text-content">
+                    <span class="lucky-tag animate-reveal">SPECIAL GIFT</span>
+                    <h2 class="title-main animate-reveal delay-1">
+                        브라보비버<br><span class="title-sub">느루칩 & 하루레몬차</span>
+                    </h2>
+                    <p class="description animate-reveal delay-2" style="color: #fff; font-weight: 400; margin-bottom: 1.5rem;">
+                        2022년부터 함께하고 있는 발달장애인의 일터, 브라보비버의 제품은 장애인 근로자분들의 정성이 담긴 따뜻한 마음을 나눕니다.
+                    </p>
+                    <p class="description animate-reveal delay-2" style="font-size: 1.1rem; border-top: 1px solid #333; padding-top: 1rem;">
+                        오도독 중독성 갑 <strong style="color: var(--brand-yellow);">느루칩</strong>과<br>
+                        산뜻한 시작을 도와줄 <strong style="color: var(--brand-yellow);">하루레몬차</strong>를 드립니다.
+                    </p>
+                </div>
+            </div>
+        </section>
+
+    </div>
+
+    <script>
+        // 데이터 바인딩
+        document.addEventListener('DOMContentLoaded', () => {
+            document.getElementById('img-1').src = PRODUCT_CONFIG.draw1.image;
+            document.getElementById('img-2').src = PRODUCT_CONFIG.draw2.image;
+            document.getElementById('img-3').src = PRODUCT_CONFIG.draw3.image;
+            document.getElementById('img-4').src = PRODUCT_CONFIG.draw4.image;
+            document.getElementById('beaver-intro-img').src = PRODUCT_CONFIG.beaverChips;
+        });
+
+        // 슬라이드 활성화 감지
+        const slides = document.querySelectorAll('.slide');
+        const observer = new IntersectionObserver((entries) => {
+            entries.forEach(entry => {
+                if (entry.isIntersecting) entry.target.classList.add('active');
+                else entry.target.classList.remove('active');
+            });
+        }, { threshold: 0.5 });
+        slides.forEach(s => observer.observe(s));
+    </script>
+</body>
+</html>
